@@ -6,48 +6,53 @@
 <body>
     <h1>Real-Time Translator</h1>
 
-    <button onclick="startRecording()">Start Recording</button>
-    <button onclick="stopRecording()">Stop Recording</button>
+    <!-- 듣고 싶은 언어 입력 -->
+    <label for="language">Enter the language you want to hear (e.g., en, ko, ja):</label>
+    <input id="language" type="text" placeholder="Enter language code">
+    <br><br>
 
-    <audio id="translatedAudio" controls></audio>
+    <!-- 연결 버튼 -->
+    <button onclick="connect()">Connect</button>
+    <br><br>
+
+    <!-- 상태 표시 -->
+    <textarea id="status" rows="10" cols="50" readonly></textarea>
 
     <script>
         let ws;
-        let mediaRecorder;
-        let audioChunks = [];
 
-        function connectWebSocket() {
-            ws = new WebSocket("ws://localhost:8000/ws");
-            ws.onmessage = (event) => {
-                const audioBlob = new Blob([event.data], { type: "audio/wav" });
-                const audioURL = URL.createObjectURL(audioBlob);
-                document.getElementById("translatedAudio").src = audioURL;
-                document.getElementById("translatedAudio").play();
-            };
-        }
+        function connect() {
+            const language = document.getElementById("language").value;
 
-        function startRecording() {
-            navigator.mediaDevices.getUserMedia({ audio: true })
-                .then(stream => {
-                    mediaRecorder = new MediaRecorder(stream);
-                    mediaRecorder.ondataavailable = event => {
-                        audioChunks.push(event.data);
-                        if (mediaRecorder.state === "inactive") {
-                            const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
-                            audioBlob.arrayBuffer().then(buffer => {
-                                ws.send(buffer);
-                            });
-                        }
-                    };
-                    mediaRecorder.start();
-                    connectWebSocket();
-                });
-        }
-
-        function stopRecording() {
-            if (mediaRecorder) {
-                mediaRecorder.stop();
+            if (!language) {
+                alert("Please enter the language code!");
+                return;
             }
+
+            // WebSocket 연결
+            ws = new WebSocket("ws://121.181.48.40:8000/ws");
+
+            ws.onopen = () => {
+                // 사용자가 설정한 언어 서버로 전송
+                ws.send(JSON.stringify({
+                    type: "connect",
+                    language: language
+                }));
+                document.getElementById("status").value += "Connected to server\n";
+            };
+
+            ws.onmessage = (event) => {
+                document.getElementById("status").value += "Server: " + event.data + "\n";
+            };
+
+            ws.onclose = () => {
+                document.getElementById("status").value += "Disconnected from server\n";
+            };
+
+            ws.onerror = (error) => {
+                console.error("WebSocket error:", error);
+                document.getElementById("status").value += "Error connecting to server\n";
+            };
         }
     </script>
 </body>
