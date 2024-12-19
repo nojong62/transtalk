@@ -1,32 +1,59 @@
-import WebSocket from 'ws';
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Real-Time Translator</title>
+</head>
+<body>
+    <h1>Real-Time Translator</h1>
 
-// WebSocket URL 및 설정
-const url = 'wss://nojong62.github.io/transtalk';
+    <!-- 듣고 싶은 언어 입력 -->
+    <label for="language">Enter the language you want to hear (e.g., en, ko, ja):</label>
+    <input id="language" type="text" placeholder="Enter language code">
+    <br><br>
 
-// WebSocket 클라이언트 생성
-const ws = new WebSocket(url);
+    <!-- 연결 버튼 -->
+    <button onclick="connect()">Connect</button>
+    <br><br>
 
-ws.on('open', function open() {
-    console.log('User connected to the WebSocket server.');
+    <!-- 상태 및 결과 표시 -->
+    <textarea id="status" rows="10" cols="50" readonly></textarea>
 
-    // 기본 메시지 전송
-    ws.send(JSON.stringify({
-        type: 'response.create',
-        response: {
-            modalities: ["text"],
-            instructions: "Please assist the user.",
+    <script>
+        let ws;
+
+        function connect() {
+            const language = document.getElementById("language").value;
+
+            if (!language) {
+                alert("Please enter the language code!");
+                return;
+            }
+
+            // WebSocket 연결
+            ws = new WebSocket("ws://<YOUR_SERVER_IP>:8000/ws");
+
+            ws.onopen = () => {
+                // 서버로 언어 설정 전송
+                ws.send(JSON.stringify({
+                    type: "connect",
+                    language: language
+                }));
+                document.getElementById("status").value += "Connected to server\n";
+            };
+
+            ws.onmessage = (event) => {
+                document.getElementById("status").value += "Translated: " + event.data + "\n";
+            };
+
+            ws.onclose = () => {
+                document.getElementById("status").value += "Disconnected from server\n";
+            };
+
+            ws.onerror = (error) => {
+                console.error("WebSocket error:", error);
+                document.getElementById("status").value += "Error connecting to server\n";
+            };
         }
-    }));
-});
-
-ws.on('message', function incoming(message) {
-    console.log('Message from server:', JSON.parse(message.toString()));
-});
-
-ws.on('error', function error(err) {
-    console.error('WebSocket error:', err);
-});
-
-ws.on('close', function close() {
-    console.log('WebSocket connection closed.');
-});
+    </script>
+</body>
+</html>
