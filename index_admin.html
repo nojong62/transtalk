@@ -1,8 +1,6 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin: Real-Time Translator</title>
 </head>
 <body>
@@ -13,13 +11,9 @@
     <input id="apiKey" type="text" placeholder="Enter your OpenAI API Key">
     <br><br>
 
-    <!-- 언어 선택 -->
-    <label for="language">Select Language:</label>
-    <select id="language">
-        <option value="en">English</option>
-        <option value="ko">Korean</option>
-        <option value="ja">Japanese</option>
-    </select>
+    <!-- 듣고 싶은 언어 입력 -->
+    <label for="language">Enter the language you want to hear (e.g., en, ko, ja):</label>
+    <input id="language" type="text" placeholder="Enter language code">
     <br><br>
 
     <!-- 연결 버튼 -->
@@ -27,7 +21,7 @@
     <br><br>
 
     <!-- 상태 표시 -->
-    <textarea id="status" rows=10 cols=50 readonly></textarea>
+    <textarea id="status" rows="10" cols="50" readonly></textarea>
 
     <script>
         let ws;
@@ -36,16 +30,16 @@
             const apiKey = document.getElementById("apiKey").value;
             const language = document.getElementById("language").value;
 
-            if (!apiKey) {
-                alert("Please enter your API Key!");
+            if (!apiKey || !language) {
+                alert("Please enter both the API Key and the language code!");
                 return;
             }
 
             // WebSocket 연결
-            ws = new WebSocket("ws://localhost:8000/ws");
+            ws = new WebSocket("ws://localhost:8000/ws"); // WebSocket URL 수정 필요
 
             ws.onopen = () => {
-                // API Key와 언어 설정을 서버로 전송
+                // API Key와 언어 설정 서버로 전송
                 ws.send(JSON.stringify({
                     type: "admin",
                     apiKey: apiKey,
