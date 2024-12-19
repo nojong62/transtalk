@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Translator</title>
+</head>
+<body>
+    <h1>Real-Time Translator (User)</h1>
+    <label>Your Language:</label>
+    <input id="language" type="text" placeholder="e.g., en, ko"><br>
+    <button onclick="connect()">Connect</button>
+    <audio id="audioPlayer" controls></audio>
+
+    <script>
+        let socket;
+
+        function connect() {
+            const language = document.getElementById("language").value;
+
+            if (!language) {
+                alert("Please enter a language");
+                return;
+            }
+
+            socket = new WebSocket("wss://tiny-deer-like.loca.lt/ws");
+
+            socket.onopen = () => {
+                console.log("Connected to server");
+                socket.send(JSON.stringify({ language: language }));
+            };
+
+            socket.onmessage = (event) => {
+                const audioBlob = new Blob([event.data], { type: "audio/wav" });
+                const audioPlayer = document.getElementById("audioPlayer");
+                audioPlayer.src = URL.createObjectURL(audioBlob);
+                audioPlayer.play();
+            };
+
+            socket.onerror = (error) => {
+                console.error("WebSocket error:", error);
+            };
+
+            socket.onclose = () => {
+                console.log("Disconnected from server");
+            };
+        }
+    </script>
+</body>
+</html>
