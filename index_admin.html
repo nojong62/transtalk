@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin: Real-Time Translator</title>
+</head>
+<body>
+    <h1>Admin: Real-Time Translator</h1>
+
+    <!-- API Key 입력 -->
+    <label for="apiKey">Enter API Key:</label>
+    <input id="apiKey" type="text" placeholder="Enter your OpenAI API Key">
+    <br><br>
+
+    <!-- 언어 선택 -->
+    <label for="language">Select Language:</label>
+    <select id="language">
+        <option value="en">English</option>
+        <option value="ko">Korean</option>
+        <option value="ja">Japanese</option>
+    </select>
+    <br><br>
+
+    <!-- 연결 버튼 -->
+    <button onclick="connect()">Connect</button>
+    <br><br>
+
+    <!-- 상태 표시 -->
+    <textarea id="status" rows=10 cols=50 readonly></textarea>
+
+    <script>
+        let ws;
+
+        function connect() {
+            const apiKey = document.getElementById("apiKey").value;
+            const language = document.getElementById("language").value;
+
+            if (!apiKey) {
+                alert("Please enter your API Key!");
+                return;
+            }
+
+            // WebSocket 연결
+            ws = new WebSocket("ws://localhost:8000/ws");
+
+            ws.onopen = () => {
+                // API Key와 언어 설정을 서버로 전송
+                ws.send(JSON.stringify({
+                    type: "admin",
+                    apiKey: apiKey,
+                    language: language
+                }));
+                document.getElementById("status").value += "Connected to server\n";
+            };
+
+            ws.onmessage = (event) => {
+                document.getElementById("status").value += "Server: " + event.data + "\n";
+            };
+
+            ws.onclose = () => {
+                document.getElementById("status").value += "Disconnected from server\n";
+            };
+
+            ws.onerror = (error) => {
+                console.error("WebSocket error:", error);
+                document.getElementById("status").value += "Error connecting to server\n";
+            };
+        }
+    </script>
+</body>
+</html>
